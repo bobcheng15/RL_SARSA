@@ -1,16 +1,11 @@
 import math, random
+import sys
+sys.path.append('../gym')
 import gym
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.autograd as autograd
-import torch.nn.functional as F
-from tensorboardX import SummaryWriter
 import matplotlib.pyplot as plt
 import os
 from gym.envs.registration import register
-
 
 register(
     id='FrozenLakeNotSlippery-v0',
@@ -33,26 +28,25 @@ LEFT = 0
 DOWN = 1
 RIGHT = 2
 UP = 3
+episode_count = 0;
+
 
 print(env.observation_space.n)
 print(env.action_space.n)
 
 epsilon_start = 1.
 epsilon_final = 0.01
-epsilon_decay = 3000.
+epsilon_decay = 5000.
 
 def epsilon_by_frame(frame_idx):
-    epsilon = 1 / frame_idx;
+    epsilon = max(math.exp(-(1/epsilon_decay)*frame_idx), epsilon_final)
     return epsilon
 
-
-
-
-plt.plot([epsilon_by_frame(i) for i in range(100000)])
 
 def act(state, epsilon):
     action = 0
     max = Q[state][0];
+    print(epsilon)
     if random.random() > epsilon:
         for i in range (1, 4):
             if Q[state][i] > max:
@@ -69,11 +63,15 @@ def act(state, epsilon):
 
 
 Q = np.zeros((16, 4))
+# for i in range(0, 16):
+#     for j in range(0, 4):
+#         Q[i][j] = 1;
+#
 losses         = []
 all_rewards    = []
 frames = []
 episode_reward = 0
-num_frames = 10000
+num_frames = 100000
 gamma = 0.8
 rate = 0.9
 count = 0
@@ -91,17 +89,18 @@ for frame_idx in range(1, num_frames + 1):
     next_action = act(next_state, epsilon)
 
     # update Q table
-    Q[state][action] = Q[state][action] + rate * (reward + gamma * Q[next_state][next_action] + Q[state][action])
+    Q[state][action] = Q[state][action] + rate * (reward + gamma * Q[next_state][next_action] - Q[state][action])
 
     # go to next state
     state = next_state
     episode_reward += reward
-
+    print(reward)
 
     if done:
         state = env.reset()
         all_rewards.append(episode_reward)
         episode_reward = 0
+        episode_count = episode_count + 1
         print('-----------done')
         if (reward == 1): count += 1
 
