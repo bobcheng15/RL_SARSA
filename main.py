@@ -35,7 +35,7 @@ print(env.observation_space.n)
 print(env.action_space.n)
 
 epsilon_start = 1.
-epsilon_final = 0.01
+epsilon_final = 0.1
 epsilon_decay = 5000.
 
 def epsilon_by_frame(frame_idx):
@@ -55,18 +55,7 @@ def act(state, epsilon):
         action = random.randint(0, 3)
 
     return action
-
-
-# # Start learning
-
-# In[1]:
-
-
 Q = np.zeros((16, 4))
-# for i in range(0, 16):
-#     for j in range(0, 4):
-#         Q[i][j] = 1;
-#
 losses         = []
 all_rewards    = []
 frames = []
@@ -102,8 +91,16 @@ for frame_idx in range(1, num_frames + 1):
         episode_reward = 0
         episode_count = episode_count + 1
         print('-----------done')
+
         if (reward == 1): count += 1
 
 env.close()
+fail = True
+for i in range (0, 16):
+    for j in range(0, 4):
+        if (Q[i][j] != 0.0):
+            fail = False;
+if (fail):
+    print("====== Training Failed ======    ")
 print (count)
 print(Q)
